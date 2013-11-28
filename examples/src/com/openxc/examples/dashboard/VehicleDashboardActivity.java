@@ -19,29 +19,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
 
-import com.openxc.measurements.TurnSignalStatus;
+import com.openxc.measurements.*;
 import com.openxc.VehicleManager;
 import com.openxc.examples.R;
-import com.openxc.measurements.BrakePedalStatus;
-import com.openxc.measurements.HeadlampStatus;
-import com.openxc.measurements.EngineSpeed;
-import com.openxc.measurements.TorqueAtTransmission;
-import com.openxc.measurements.AcceleratorPedalPosition;
-import com.openxc.measurements.Latitude;
-import com.openxc.measurements.Longitude;
-import com.openxc.measurements.ParkingBrakeStatus;
-import com.openxc.measurements.IgnitionStatus;
-import com.openxc.measurements.SteeringWheelAngle;
-import com.openxc.measurements.TransmissionGearPosition;
-import com.openxc.measurements.UnrecognizedMeasurementTypeException;
-import com.openxc.measurements.VehicleDoorStatus;
-import com.openxc.measurements.VehicleButtonEvent;
-import com.openxc.measurements.Measurement;
-import com.openxc.measurements.VehicleSpeed;
-import com.openxc.measurements.FuelConsumed;
-import com.openxc.measurements.FuelLevel;
-import com.openxc.measurements.Odometer;
-import com.openxc.measurements.WindshieldWiperStatus;
 import com.openxc.remote.VehicleServiceException;
 
 public class VehicleDashboardActivity extends Activity {
@@ -56,6 +36,7 @@ public class VehicleDashboardActivity extends Activity {
     private TextView mFuelConsumedView;
     private TextView mFuelLevelView;
     private TextView mOdometerView;
+    private TextView mAudioVolumeView;
     private TextView mVehicleBrakeStatusView;
     private TextView mParkingBrakeStatusView;
     private TextView mVehicleEngineSpeedView;
@@ -116,8 +97,18 @@ public class VehicleDashboardActivity extends Activity {
             final FuelLevel level = (FuelLevel) measurement;
             mHandler.post(new Runnable() {
                 public void run() {
-                    mFuelLevelView.setText(
-                        "" + level.getValue().doubleValue());
+                    mFuelLevelView.setText("" + level.getValue().doubleValue());
+                }
+            });
+        }
+    };
+
+    AudioVolume.Listener mAudioVolumeListener = new Odometer.Listener() {
+        public void receive(Measurement measurement) {
+            final AudioVolume audioVolume = (AudioVolume) measurement;
+            mHandler.post(new Runnable() {
+                public void run() {
+                    mAudioVolumeView.setText("" + audioVolume.getValue().doubleValue());
                 }
             });
         }
@@ -128,8 +119,7 @@ public class VehicleDashboardActivity extends Activity {
             final Odometer odometer = (Odometer) measurement;
             mHandler.post(new Runnable() {
                 public void run() {
-                    mOdometerView.setText(
-                        "" + odometer.getValue().doubleValue());
+                    mOdometerView.setText("" + odometer.getValue().doubleValue());
                 }
             });
         }
@@ -325,49 +315,32 @@ public class VehicleDashboardActivity extends Activity {
     };
 
     private ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className,
-                IBinder service) {
+
+        public void onServiceConnected(ComponentName className, IBinder service) {
+
             Log.i(TAG, "Bound to VehicleManager");
-            mVehicleManager = ((VehicleManager.VehicleBinder)service
-                    ).getService();
+            mVehicleManager = ((VehicleManager.VehicleBinder)service).getService();
 
             try {
-                mVehicleManager.addListener(SteeringWheelAngle.class,
-                        mSteeringWheelListener);
-                mVehicleManager.addListener(VehicleSpeed.class,
-                        mSpeedListener);
-                mVehicleManager.addListener(FuelConsumed.class,
-                        mFuelConsumedListener);
-                mVehicleManager.addListener(FuelLevel.class,
-                        mFuelLevelListener);
-                mVehicleManager.addListener(Odometer.class,
-                        mOdometerListener);
-                mVehicleManager.addListener(WindshieldWiperStatus.class,
-                        mWiperListener);
-                mVehicleManager.addListener(BrakePedalStatus.class,
-                        mBrakePedalStatus);
-                mVehicleManager.addListener(ParkingBrakeStatus.class,
-                        mParkingBrakeStatus);
-                mVehicleManager.addListener(HeadlampStatus.class,
-                        mHeadlampStatus);
-                mVehicleManager.addListener(EngineSpeed.class,
-                        mEngineSpeed);
-                mVehicleManager.addListener(TorqueAtTransmission.class,
-                        mTorqueAtTransmission);
-                mVehicleManager.addListener(AcceleratorPedalPosition.class,
-                        mAcceleratorPedalPosition);
-                mVehicleManager.addListener(TransmissionGearPosition.class,
-                        mTransmissionGearPos);
-                mVehicleManager.addListener(IgnitionStatus.class,
-                        mIgnitionStatus);
-                mVehicleManager.addListener(Latitude.class,
-                        mLatitude);
-                mVehicleManager.addListener(Longitude.class,
-                        mLongitude);
-                mVehicleManager.addListener(VehicleButtonEvent.class,
-                        mButtonEvent);
-                mVehicleManager.addListener(VehicleDoorStatus.class,
-                        mDoorStatus);
+                mVehicleManager.addListener(SteeringWheelAngle.class, mSteeringWheelListener);
+                mVehicleManager.addListener(VehicleSpeed.class, mSpeedListener);
+                mVehicleManager.addListener(FuelConsumed.class, mFuelConsumedListener);
+                mVehicleManager.addListener(FuelLevel.class, mFuelLevelListener);
+                mVehicleManager.addListener(AudioVolume.class, mAudioVolumeListener);
+                mVehicleManager.addListener(Odometer.class, mOdometerListener);
+                mVehicleManager.addListener(WindshieldWiperStatus.class, mWiperListener);
+                mVehicleManager.addListener(BrakePedalStatus.class, mBrakePedalStatus);
+                mVehicleManager.addListener(ParkingBrakeStatus.class, mParkingBrakeStatus);
+                mVehicleManager.addListener(HeadlampStatus.class, mHeadlampStatus);
+                mVehicleManager.addListener(EngineSpeed.class, mEngineSpeed);
+                mVehicleManager.addListener(TorqueAtTransmission.class, mTorqueAtTransmission);
+                mVehicleManager.addListener(AcceleratorPedalPosition.class, mAcceleratorPedalPosition);
+                mVehicleManager.addListener(TransmissionGearPosition.class, mTransmissionGearPos);
+                mVehicleManager.addListener(IgnitionStatus.class, mIgnitionStatus);
+                mVehicleManager.addListener(Latitude.class, mLatitude);
+                mVehicleManager.addListener(Longitude.class, mLongitude);
+                mVehicleManager.addListener(VehicleButtonEvent.class, mButtonEvent);
+                mVehicleManager.addListener(VehicleDoorStatus.class, mDoorStatus);
             } catch(VehicleServiceException e) {
                 Log.w(TAG, "Couldn't add listeners for measurements", e);
             } catch(UnrecognizedMeasurementTypeException e) {
@@ -390,60 +363,38 @@ public class VehicleDashboardActivity extends Activity {
         setContentView(R.layout.main);
         Log.i(TAG, "Vehicle dashboard created");
 
-        mSteeringWheelAngleView = (TextView) findViewById(
-                R.id.steering_wheel_angle);
-        mVehicleSpeedView = (TextView) findViewById(
-                R.id.vehicle_speed);
-        mFuelConsumedView = (TextView) findViewById(
-                R.id.fuel_consumed);
-        mFuelLevelView = (TextView) findViewById(
-                R.id.fuel_level);
-        mOdometerView = (TextView) findViewById(
-                R.id.odometer);
-        mWiperStatusView = (TextView) findViewById(
-                R.id.wiper_status);
-        mVehicleBrakeStatusView = (TextView) findViewById(
-                R.id.brake_pedal_status);
-        mParkingBrakeStatusView = (TextView) findViewById(
-                R.id.parking_brake_status);
-        mHeadlampStatusView = (TextView) findViewById(
-                R.id.headlamp_status);
-        mVehicleEngineSpeedView = (TextView) findViewById(
-                R.id.engine_speed);
-        mTorqueAtTransmissionView = (TextView) findViewById(
-                R.id.torque_at_transmission);
-        mAcceleratorPedalPositionView = (TextView) findViewById(
-                R.id.accelerator_pedal_position);
-        mTransmissionGearPosView = (TextView) findViewById(
-                R.id.transmission_gear_pos);
-        mIgnitionStatusView = (TextView) findViewById(
-                R.id.ignition);
-        mLatitudeView = (TextView) findViewById(
-                R.id.latitude);
-        mLongitudeView = (TextView) findViewById(
-                R.id.longitude);
-        mAndroidLatitudeView = (TextView) findViewById(
-                R.id.android_latitude);
-        mAndroidLongitudeView = (TextView) findViewById(
-                R.id.android_longitude);
-        mButtonEventView = (TextView) findViewById(
-                R.id.button_event);
-        mDoorStatusView = (TextView) findViewById(
-                R.id.door_status);
+        mSteeringWheelAngleView = (TextView) findViewById(R.id.steering_wheel_angle);
+        mVehicleSpeedView = (TextView) findViewById(R.id.vehicle_speed);
+        mFuelConsumedView = (TextView) findViewById(R.id.fuel_consumed);
+        mFuelLevelView = (TextView) findViewById(R.id.fuel_level);
+        mOdometerView = (TextView) findViewById(R.id.odometer);
+        mAudioVolumeView = (TextView) findViewById(R.id.audio_volume);
+        mWiperStatusView = (TextView) findViewById(R.id.wiper_status);
+        mVehicleBrakeStatusView = (TextView) findViewById(R.id.brake_pedal_status);
+        mParkingBrakeStatusView = (TextView) findViewById(R.id.parking_brake_status);
+        mHeadlampStatusView = (TextView) findViewById(R.id.headlamp_status);
+        mVehicleEngineSpeedView = (TextView) findViewById(R.id.engine_speed);
+        mTorqueAtTransmissionView = (TextView) findViewById(R.id.torque_at_transmission);
+        mAcceleratorPedalPositionView = (TextView) findViewById(R.id.accelerator_pedal_position);
+        mTransmissionGearPosView = (TextView) findViewById(R.id.transmission_gear_pos);
+        mIgnitionStatusView = (TextView) findViewById(R.id.ignition);
+        mLatitudeView = (TextView) findViewById(R.id.latitude);
+        mLongitudeView = (TextView) findViewById(R.id.longitude);
+        mAndroidLatitudeView = (TextView) findViewById(R.id.android_latitude);
+        mAndroidLongitudeView = (TextView) findViewById(R.id.android_longitude);
+        mButtonEventView = (TextView) findViewById(R.id.button_event);
+        mDoorStatusView = (TextView) findViewById(R.id.door_status);
         mBuffer = new StringBuffer();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        bindService(new Intent(this, VehicleManager.class),
-                mConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, VehicleManager.class), mConnection, Context.BIND_AUTO_CREATE);
 
-        LocationManager locationManager = (LocationManager)
-            getSystemService(Context.LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         try {
-            locationManager.requestLocationUpdates(
-                    VehicleManager.VEHICLE_LOCATION_PROVIDER, 0, 0,
+            locationManager.requestLocationUpdates(VehicleManager.VEHICLE_LOCATION_PROVIDER, 0, 0,
                     mAndroidLocationListener);
         } catch(IllegalArgumentException e) {
             Log.w(TAG, "Vehicle location provider is unavailable");
