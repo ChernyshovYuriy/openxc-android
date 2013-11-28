@@ -10,6 +10,7 @@ import android.util.Log;
  * implementations.
  */
 public class VehicleInterfaceFactory {
+
     private static final String TAG = "VehicleInterfaceFactory";
 
     /**
@@ -25,17 +26,14 @@ public class VehicleInterfaceFactory {
      *      or loaded.
      *
      */
-    public static Class<? extends VehicleInterface> findClass(
-            String interfaceName) throws VehicleInterfaceException {
+    public static Class<? extends VehicleInterface> findClass(String interfaceName) throws VehicleInterfaceException {
         Log.d(TAG, "Looking up class for name " + interfaceName);
         Class<? extends VehicleInterface> interfaceType;
         try {
-            interfaceType = Class.forName(interfaceName).asSubclass(
-                    VehicleInterface.class);
+            interfaceType = Class.forName(interfaceName).asSubclass(VehicleInterface.class);
             Log.d(TAG, "Found " + interfaceType);
         } catch(ClassNotFoundException e) {
-            String message = "Couldn't find vehicle interface type " +
-                    interfaceName;
+            String message = "Couldn't find vehicle interface type " + interfaceName;
             Log.w(TAG, message, e);
             throw new VehicleInterfaceException(message, e);
         }
@@ -67,18 +65,14 @@ public class VehicleInterfaceFactory {
      * @throws VehicleInterfaceException If the class' constructor threw an
      *      exception.
      */
-    public static VehicleInterface build(
-            Class<? extends VehicleInterface> interfaceType,
+    public static VehicleInterface build(Class<? extends VehicleInterface> interfaceType,
             Context context, String resource) throws VehicleInterfaceException {
-        Log.d(TAG, "Constructing new instance of " + interfaceType
-                + " with resource " + resource);
+        Log.d(TAG, "Constructing new instance of " + interfaceType + " with resource " + resource);
         Constructor<? extends VehicleInterface> constructor;
         try {
-            constructor = interfaceType.getConstructor(
-                    Context.class, String.class);
+            constructor = interfaceType.getConstructor(Context.class, String.class);
         } catch(NoSuchMethodException e) {
-            String message = interfaceType +
-                    " doesn't have a proper constructor";
+            String message = interfaceType + " doesn't have a proper constructor";
             Log.w(TAG, message);
             throw new VehicleInterfaceException(message, e);
         }
@@ -88,12 +82,10 @@ public class VehicleInterfaceFactory {
         try {
             return constructor.newInstance(context, resource);
         } catch(InstantiationException e) {
-            message = "Couldn't instantiate vehicle interface " +
-                interfaceType;
+            message = "Couldn't instantiate vehicle interface " + interfaceType;
             error = e;
         } catch(IllegalAccessException e) {
-            message = "Default constructor is not accessible on " +
-                interfaceType;
+            message = "Default constructor is not accessible on " + interfaceType;
             error = e;
         } catch(InvocationTargetException e) {
             message = interfaceType + "'s constructor threw an exception";

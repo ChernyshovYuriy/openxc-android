@@ -27,23 +27,24 @@ import com.openxc.sources.WakeLockManager;
 
 /**
  * The VehicleService is the centralized source of all vehicle data.
- *
+ * <p/>
  * This server is intended to be a singleton on an Android device. All OpenXC
  * applciations funnel data to and from this service so they can share sources,
  * sinks and vehicle interfaces.
- *
+ * <p/>
  * Applications should not use this service directly, but should bind to the
  * in-process {@link com.openxc.VehicleManager} instead - that has an interface
  * that respects Measurement types. The interface used for the
  * VehicleService is purposefully primative as there are a small set of
  * objects that can be natively marshalled through an AIDL interface.
- *
+ * <p/>
  * By default, if the Android device supports uSB, the
  * {@link UsbVehicleInterface} is activated as a {@link VehicleInterface}. Other
  * vehicle interfaces can be activated with the
  * {@link #addVehicleInterface(Class, String)} method and they can removed with
- * {@link #removeVehicleInterface(Class)}.
- *
+ * {@link #removeVehicleInterface(VehicleInterface)}.
+ * {@link #removeVehicleInterface(String)}.
+ * <p/>
  * This service uses the same {@link com.openxc.DataPipeline} as the
  * {@link com.openxc.VehicleManager} to move data from sources to sinks, but it
  * the pipeline is not modifiable by the application as there is no good way to
@@ -75,7 +76,7 @@ public class VehicleService extends Service implements DataPipeline.Operator {
 
     /**
      * Shut down any associated services when this service is about to die.
-     *
+     * <p/>
      * This stops the data source (e.g. stops trace playback) and kills the
      * thread used for notifying measurement listeners.
      */
@@ -97,37 +98,31 @@ public class VehicleService extends Service implements DataPipeline.Operator {
         return mBinder;
     }
 
-    private void moveToForeground(){
+    private void moveToForeground() {
         Log.i(TAG, "Moving service to foreground.");
 
         try {
-            Intent intent = new Intent(this,
-                    Class.forName("com.openxc.enabler.OpenXcEnablerActivity"));
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            PendingIntent pendingIntent = PendingIntent.getActivity(
-                    this, 0, intent, 0);
+            Intent intent = new Intent(this, Class.forName("com.openxc.enabler.OpenXcEnablerActivity"));
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
-            NotificationCompat.Builder notificationBuilder =
-                    new NotificationCompat.Builder(this);
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this);
             notificationBuilder.setContentTitle(getString(R.string.openxc_name))
                     .setContentInfo(getString(R.string.notification_content))
                     .setSmallIcon(R.drawable.openxc_notification_icon_small_white)
                     .setContentIntent(pendingIntent);
 
-            startForeground(SERVICE_NOTIFICATION_ID,
-                    notificationBuilder.build());
+            startForeground(SERVICE_NOTIFICATION_ID, notificationBuilder.build());
         } catch (ClassNotFoundException e) {
             // TODO Special action if enabler is not installed
-
             Log.e(TAG, "Could not find OpenXcEnablerActivity class.", e);
         }
     }
 
-    private void removeFromForeground(){
+    private void removeFromForeground() {
         Log.i(TAG, "Removing service from foreground.");
 
-        if(!sIsUnderTest) {
+        if (!sIsUnderTest) {
             stopForeground(true);
         }
     }
@@ -138,14 +133,13 @@ public class VehicleService extends Service implements DataPipeline.Operator {
 
     private void initializeDefaultSources() {
         mPipeline.addSource(mApplicationSource);
-        if(android.os.Build.VERSION.SDK_INT >=
-                android.os.Build.VERSION_CODES.HONEYCOMB) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
             addVehicleInterface(UsbVehicleInterface.class);
         }
     }
 
-    private final VehicleServiceInterface.Stub mBinder =
-        new VehicleServiceInterface.Stub() {
+    private final VehicleServiceInterface.Stub mBinder = new VehicleServiceInterface.Stub() {
+
             public RawMeasurement get(String measurementId) {
                 return mPipeline.get(measurementId);
             }
@@ -155,6 +149,7 @@ public class VehicleService extends Service implements DataPipeline.Operator {
             }
 
             public void receive(RawMeasurement measurement) {
+                Log.i(TAG, "Receive " + measurement);
                 mApplicationSource.handleMessage(measurement);
             }
 
@@ -172,10 +167,8 @@ public class VehicleService extends Service implements DataPipeline.Operator {
                 return VehicleService.this.mPipeline.getMessageCount();
             }
 
-            public void addVehicleInterface(String interfaceName,
-                    String resource) {
-                VehicleService.this.addVehicleInterface(
-                        interfaceName, resource);
+            public void addVehicleInterface(String interfaceName, String resource) {
+                VehicleService.this.addVehicleInterface(interfaceName, resource);
             }
 
             public void removeVehicleInterface(String interfaceName) {
@@ -184,7 +177,7 @@ public class VehicleService extends Service implements DataPipeline.Operator {
 
             public List<String> getSourceSummaries() {
                 ArrayList<String> sources = new ArrayList<String>();
-                for(VehicleDataSource source : mPipeline.getSources()) {
+                for (VehicleDataSource source : mPipeline.getSources()) {
                     sources.add(source.toString());
                 }
                 return sources;
@@ -192,46 +185,38 @@ public class VehicleService extends Service implements DataPipeline.Operator {
 
             public List<String> getSinkSummaries() {
                 ArrayList<String> sinks = new ArrayList<String>();
-                for(VehicleDataSink sink : mPipeline.getSinks()) {
+                for (VehicleDataSink sink : mPipeline.getSinks()) {
                     sinks.add(sink.toString());
                 }
                 return sinks;
             }
-    };
+        };
 
-    private void addVehicleInterface(
-            Class<? extends VehicleInterface> interfaceType) {
+    private void addVehicleInterface(Class<? extends VehicleInterface> interfaceType) {
         addVehicleInterface(interfaceType, null);
     }
 
-    private void addVehicleInterface(
-            Class<? extends VehicleInterface> interfaceType,
-            String resource) {
-        VehicleInterface vehicleInterface =
-            findActiveVehicleInterface(interfaceType);
-
-        if(vehicleInterface == null) {
+    private void addVehicleInterface(Class<? extends VehicleInterface> interfaceType, String resource) {
+        VehicleInterface vehicleInterface = findActiveVehicleInterface(interfaceType);
+        if (vehicleInterface == null) {
             try {
-                vehicleInterface = VehicleInterfaceFactory.build(
-                        interfaceType, VehicleService.this, resource);
-            } catch(VehicleInterfaceException e) {
+                vehicleInterface = VehicleInterfaceFactory.build(interfaceType, VehicleService.this, resource);
+                Log.d(TAG, "Vehicle interface created: " + vehicleInterface);
+            } catch (VehicleInterfaceException e) {
                 Log.w(TAG, "Unable to add vehicle interface", e);
                 return;
             }
-
             mInterfaces.add(vehicleInterface);
             mPipeline.addSource(vehicleInterface);
         } else {
             try {
-                if(vehicleInterface.setResource(resource)) {
-                    Log.d(TAG, "Changed resource of already active interface " +
-                            vehicleInterface);
+                if (vehicleInterface.setResource(resource)) {
+                    Log.d(TAG, "Changed resource of already active interface " + vehicleInterface);
                 } else {
                     Log.d(TAG, "Interface " + vehicleInterface +
-                            " already had same active resource " + resource +
-                            " -- not restarting");
+                            " already had same active resource " + resource + " -- not restarting");
                 }
-            } catch(DataSourceException e) {
+            } catch (DataSourceException e) {
                 Log.w(TAG, "Unable to change resource", e);
             }
         }
@@ -240,9 +225,8 @@ public class VehicleService extends Service implements DataPipeline.Operator {
 
     private void addVehicleInterface(String interfaceName, String resource) {
         try {
-            addVehicleInterface(
-                    VehicleInterfaceFactory.findClass(interfaceName), resource);
-        } catch(VehicleInterfaceException e) {
+            addVehicleInterface(VehicleInterfaceFactory.findClass(interfaceName), resource);
+        } catch (VehicleInterfaceException e) {
             Log.w(TAG, "Unable to add vehicle interface", e);
         }
     }
@@ -252,7 +236,7 @@ public class VehicleService extends Service implements DataPipeline.Operator {
     }
 
     private void removeVehicleInterface(VehicleInterface vehicleInterface) {
-        if(vehicleInterface != null) {
+        if (vehicleInterface != null) {
             vehicleInterface.stop();
             mInterfaces.remove(vehicleInterface);
             mPipeline.removeSource(vehicleInterface);
@@ -261,8 +245,8 @@ public class VehicleService extends Service implements DataPipeline.Operator {
 
     private VehicleInterface findActiveVehicleInterface(
             Class<? extends VehicleInterface> interfaceType) {
-        for(VehicleInterface vehicleInterface : mInterfaces) {
-            if(vehicleInterface.getClass().equals(interfaceType)) {
+        for (VehicleInterface vehicleInterface : mInterfaces) {
+            if (vehicleInterface.getClass().equals(interfaceType)) {
                 return vehicleInterface;
             }
         }
@@ -273,7 +257,7 @@ public class VehicleService extends Service implements DataPipeline.Operator {
         try {
             return findActiveVehicleInterface(
                     VehicleInterfaceFactory.findClass(interfaceName));
-        } catch(VehicleInterfaceException e) {
+        } catch (VehicleInterfaceException e) {
             return null;
         }
     }

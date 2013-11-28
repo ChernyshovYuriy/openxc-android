@@ -29,13 +29,12 @@ public class MeasurementListenerSink extends AbstractQueuedCallbackSink {
         mListeners = Multimaps.synchronizedMultimap(mListeners);
     }
 
-    public void register(Class<? extends Measurement> measurementType,
-            Measurement.Listener listener)
+    public void register(Class<? extends Measurement> measurementType, Measurement.Listener listener)
             throws UnrecognizedMeasurementTypeException {
         mListeners.put(measurementType, listener);
 
         String measurementId = BaseMeasurement.getIdForClass(measurementType);
-        if(containsMeasurement(measurementId)) {
+        if (containsMeasurement(measurementId)) {
             // send the last known value to the new listener
             try {
                 receive(get(measurementId));
@@ -45,8 +44,7 @@ public class MeasurementListenerSink extends AbstractQueuedCallbackSink {
         }
     }
 
-    public void unregister(Class<? extends Measurement> measurementType,
-            Measurement.Listener listener) {
+    public void unregister(Class<? extends Measurement> measurementType, Measurement.Listener listener) {
         mListeners.remove(measurementType, listener);
     }
 
@@ -57,13 +55,10 @@ public class MeasurementListenerSink extends AbstractQueuedCallbackSink {
             .toString();
     }
 
-    protected void propagateMeasurement(String measurementId,
-            RawMeasurement rawMeasurement) {
+    protected void propagateMeasurement(String measurementId, RawMeasurement rawMeasurement) {
         try {
-            Measurement measurement = BaseMeasurement.getMeasurementFromRaw(
-                    rawMeasurement);
-            for(Measurement.Listener listener :
-                    mListeners.get(BaseMeasurement.getClassForId(measurementId))) {
+            Measurement measurement = BaseMeasurement.getMeasurementFromRaw(rawMeasurement);
+            for (Measurement.Listener listener : mListeners.get(BaseMeasurement.getClassForId(measurementId))) {
                 listener.receive(measurement);
             }
         } catch(UnrecognizedMeasurementTypeException e) {

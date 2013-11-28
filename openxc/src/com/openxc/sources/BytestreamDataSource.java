@@ -40,7 +40,7 @@ public abstract class BytestreamDataSource extends ContextualVehicleDataSource
     }
 
     public void start() {
-        if(mRunning.compareAndSet(false, true)) {
+        if (mRunning.compareAndSet(false, true)) {
             Log.d(getTag(), "Starting " + getTag() + " source");
             mThread = new Thread(this);
             mThread.start();
@@ -48,7 +48,7 @@ public abstract class BytestreamDataSource extends ContextualVehicleDataSource
     }
 
     public void stop() {
-        if(mRunning.compareAndSet(true, false)) {
+        if (mRunning.compareAndSet(true, false)) {
             Log.d(getTag(), "Stopping " + getTag() + " source");
             mThread.interrupt();
         }
@@ -67,7 +67,9 @@ public abstract class BytestreamDataSource extends ContextualVehicleDataSource
      *      shutting down.
      */
     protected void waitForConnection() throws InterruptedException {
-        if(!isConnected() && mConnectionCheckTask == null) {
+        Log.d(getTag(), "Wait for connection ...");
+        if (!isConnected() && mConnectionCheckTask == null) {
+            Log.d(getTag(), "new BytestreamConnectingTask(this)");
             mConnectionCheckTask = new BytestreamConnectingTask(this);
         }
 
@@ -111,10 +113,11 @@ public abstract class BytestreamDataSource extends ContextualVehicleDataSource
                 continue;
             }
 
-            if(received > 0) {
+            Log.i(getTag(), "Received: " + received);
+            if (received > 0) {
                 buffer.receive(bytes, received);
-                if(mCurrentPayloadFormat == null) {
-                    if(buffer.containsJson()) {
+                if (mCurrentPayloadFormat == null) {
+                    if (buffer.containsJson()) {
                         mCurrentPayloadFormat = PayloadFormat.JSON;
                         Log.i(getTag(), "Source is sending JSON");
                     } else {
@@ -126,6 +129,7 @@ public abstract class BytestreamDataSource extends ContextualVehicleDataSource
                 switch(mCurrentPayloadFormat) {
                     case JSON:
                         for(String record : buffer.readLines()) {
+                            Log.i(getTag(), "Message: " + record);
                             handleMessage(record);
                         }
                         break;

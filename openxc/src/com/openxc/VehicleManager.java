@@ -92,15 +92,14 @@ import com.openxc.sources.VehicleDataSource;
  * users of this service.
  */
 public class VehicleManager extends Service implements SourceCallback {
-    public final static String VEHICLE_LOCATION_PROVIDER =
-            MockedLocationSink.VEHICLE_LOCATION_PROVIDER;
+
+    public final static String VEHICLE_LOCATION_PROVIDER = MockedLocationSink.VEHICLE_LOCATION_PROVIDER;
     private final static String TAG = "VehicleManager";
     private Lock mRemoteBoundLock = new ReentrantLock();
     private Condition mRemoteBoundCondition = mRemoteBoundLock.newCondition();
     private IBinder mBinder = new VehicleBinder();
     private DataPipeline mPipeline = new DataPipeline();
-    private CopyOnWriteArrayList<VehicleInterface> mInterfaces =
-            new CopyOnWriteArrayList<VehicleInterface>();
+    private CopyOnWriteArrayList<VehicleInterface> mInterfaces = new CopyOnWriteArrayList<VehicleInterface>();
 
     // The DataPipeline in this class must only have 1 source - the special
     // RemoteListenerSource that receives measurements from the
@@ -112,8 +111,7 @@ public class VehicleManager extends Service implements SourceCallback {
     // applications that might be fine, but since we want to control trace
     // playback from the Enabler, it needs to be able to inject those into the
     // RVS.
-    private CopyOnWriteArrayList<VehicleDataSource> mSources =
-            new CopyOnWriteArrayList<VehicleDataSource>();
+    private CopyOnWriteArrayList<VehicleDataSource> mSources = new CopyOnWriteArrayList<VehicleDataSource>();
 
     private boolean mIsBound;
     private VehicleServiceInterface mRemoteService;
@@ -576,12 +574,11 @@ public class VehicleManager extends Service implements SourceCallback {
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className,
-                IBinder service) {
+
+        public void onServiceConnected(ComponentName className, IBinder service) {
             Log.i(TAG, "Bound to VehicleService");
             mRemoteService = VehicleServiceInterface.Stub.asInterface(service);
-            mRemoteController = new RemoteServiceVehicleInterface(
-                    mRemoteService);
+            mRemoteController = new RemoteServiceVehicleInterface(mRemoteService);
             mInterfaces.add(mRemoteController);
 
             mRemoteSource = new RemoteListenerSource(mRemoteService);

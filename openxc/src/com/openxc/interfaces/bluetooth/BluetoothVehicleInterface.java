@@ -27,8 +27,8 @@ import com.openxc.sources.SourceCallback;
  * This class requires both the android.permission.BLUETOOTH and
  * android.permission.BLUETOOTH_ADMIN permissions.
  */
-public class BluetoothVehicleInterface extends BytestreamDataSource
-        implements VehicleInterface {
+public class BluetoothVehicleInterface extends BytestreamDataSource implements VehicleInterface {
+
     private static final String TAG = "BluetoothVehicleInterface";
 
     private DeviceManager mDeviceManager;
@@ -37,22 +37,18 @@ public class BluetoothVehicleInterface extends BytestreamDataSource
     private BufferedInputStream mInStream;
     private BluetoothSocket mSocket;
 
-    public BluetoothVehicleInterface(SourceCallback callback, Context context,
-            String address) throws DataSourceException {
+    public BluetoothVehicleInterface(SourceCallback callback, Context context, String address) throws DataSourceException {
         super(callback, context);
         try {
             mDeviceManager = new DeviceManager(getContext());
         } catch(BluetoothException e) {
-            throw new DataSourceException(
-                    "Unable to open Bluetooth device manager", e);
+            throw new DataSourceException("Unable to open Bluetooth device manager", e);
         }
-
         setAddress(address);
         start();
     }
 
-    public BluetoothVehicleInterface(Context context, String address)
-            throws DataSourceException {
+    public BluetoothVehicleInterface(Context context, String address) throws DataSourceException {
         this(null, context, address);
     }
 
